@@ -9,7 +9,8 @@ import {
 	fontSizeOptions,
 	fontColors,
 	backgroundColors,
-	contentWidthArr
+	contentWidthArr,
+	ArticleStateType
 } from 'src/constants/articleProps';
 
 import { Button } from 'src/ui/button';
@@ -17,54 +18,35 @@ import { Text } from 'src/ui/text';
 import { Select } from 'src/ui/select';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
-
-export type MenuState = {
-	fontFamilyOption: OptionType;
-	fontColor: OptionType;
-	backgroundColor: OptionType;
-	contentWidth: OptionType;
-	fontSizeOption: OptionType;
-};
+import { useCloseModal } from 'src/hooks/useCloseModal'
 
 type ArticleParamsFormProps = {
-	onSubmit: (params: MenuState) => void;
+	onSubmit: (params: ArticleStateType) => void;
 };
 
 export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 	const [isOpenMenu, setIsOpenMenu] = useState<boolean>(false);
 	const menuForm = useRef<HTMLElement | null>(null);
-	const [menuState, setMenuState] = useState<MenuState>(defaultArticleState);
+	const [menuState, setMenuState] = useState<ArticleStateType>(defaultArticleState);
 	
 	//механизм открытия/закрытия окна
 	const handleToggleMenu = () => {	
 		setIsOpenMenu((prev) => !prev);
 		};
-
-	// Закрытие формы по клику вне её
-	const handleClickOutside = (event: MouseEvent) => {
-		if (menuForm.current && !menuForm.current.contains(event.target as Node)) {
-			setIsOpenMenu(false);
-		}
-	};
-
-	// Закрытие формы по нажатию клавиши Esc
-	const handleKeyDown = (event: KeyboardEvent) => {
-		if (event.key === 'Escape') {
-			setIsOpenMenu(false);
-		}
-	};
-	//добавляем или убираем слушателей
-	useEffect(() => {
-		document.addEventListener('mousedown', handleClickOutside);
-		document.addEventListener('keydown', handleKeyDown);
-
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-			document.removeEventListener('keydown', handleKeyDown);
+	
+	const handleCloseMenu = () => {	
+		setIsOpenMenu(false);
 		};
-	}, []);
+
+	useCloseModal({
+		isOpen: isOpenMenu,
+		onClose: handleCloseMenu,
+		rootRef: menuForm,
+		onChange: setIsOpenMenu,
+	})
+
 	//изменения формы
-	const handleChangeParam = (key: keyof MenuState) => (value: OptionType) => {
+	const handleChangeParam = (key: keyof ArticleStateType) => (value: OptionType) => {
 		setMenuState((prevState) => ({
 			...prevState,
 			[key]: value,
@@ -81,16 +63,16 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 		props.onSubmit(menuState);
 	};
 
+	const classNameMenuForm = clsx(styles.container, {
+		[styles.container_open]: isOpenMenu
+	})
+
 	return (
 		<>
 			<ArrowButton isOpen={isOpenMenu} onClick={handleToggleMenu} />
 			<aside
 			ref={menuForm}
-			className= {
-				clsx(styles.container, {
-					[styles.container_open]: isOpenMenu
-				})
-			}
+			className={classNameMenuForm}
 			>
 				<form 
 				className={styles.form}
